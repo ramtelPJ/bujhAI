@@ -86,6 +86,15 @@ model Document {
   fileSize         Int
   pageCount        Int?
   processingStatus ProcessingStatus @default(uploaded)
+  /// Client-generated per upload attempt; lets a retried/duplicated POST
+  /// /api/documents return the already-created row instead of a duplicate.
+  idempotencyKey   String?          @unique
+  /// Private Blob path to the Feature 09 pipeline's normalized per-page text
+  /// (JSON), set once parsing/OCR finishes. Derived content, not the original.
+  extractedTextBlobPath String?
+  /// User-safe message describing why processing failed, shown on the failed
+  /// state. Never document contents — see authentiation-security.md §4.
+  processingError  String?
   uploadedAt       DateTime         @default(now())
   deletedAt        DateTime?
 
@@ -109,6 +118,7 @@ model Case {
   summary         String
   primaryDeadline DateTime?
   status          CaseStatus   @default(active)
+  uncertainties   String[]     @default([])
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 

@@ -1,6 +1,5 @@
 import type { ActionStatus, Urgency, DraftType } from "@/lib/generated/prisma/enums";
 import { posthog as posthogClient } from "./posthog-client";
-import { getPostHogServerClient } from "./posthog-server";
 
 /**
  * Every product event from project-overview.md, with exactly the properties
@@ -31,12 +30,4 @@ export function trackClientEvent<E extends keyof AnalyticsEvents>(
   properties: AnalyticsEvents[E],
 ) {
   posthogClient.capture(event, properties);
-}
-
-/** API routes and Trigger.dev jobs — distinctId is always the internal userId. */
-export function trackServerEvent<E extends keyof AnalyticsEvents>(
-  event: E,
-  properties: AnalyticsEvents[E],
-) {
-  getPostHogServerClient()?.capture({ distinctId: properties.userId, event, properties });
 }

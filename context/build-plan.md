@@ -467,6 +467,5 @@ Go through every item before launch. No new features.
 These are not defined in the context files. Do not guess — ask.
 
 - **07** — Maximum file size and exact allowed image types
-- **09** — OCR provider for `lib/ocr/`
 - **19** — Which user preferences the Profile page stores
 - **14** — Call questions are stored as AI Help messages because the `drafts` type enum only includes email/letter/response; confirm this is correct

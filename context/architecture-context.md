@@ -153,18 +153,21 @@ Represents the application's user.
 
 Represents the original uploaded document.
 
-| Field              | Type      | Description                            |
-| ------------------ | --------- | -------------------------------------- |
-| `id`               | String    | Primary key                            |
-| `userId`           | String    | Owner                                  |
-| `fileName`         | String    | Original filename                      |
-| `mimeType`         | String    | PDF/image type                         |
-| `blobPath`         | String    | Private Vercel Blob reference          |
-| `fileSize`         | Int       | File size                              |
-| `pageCount`        | Int?      | Number of pages when known             |
-| `processingStatus` | Enum      | Upload/processing/result/failure state |
-| `uploadedAt`       | DateTime  | Upload timestamp                       |
-| `deletedAt`        | DateTime? | Soft-delete timestamp if used          |
+| Field                    | Type      | Description                                                |
+| ------------------------ | --------- | ----------------------------------------------------------- |
+| `id`                     | String    | Primary key                                                 |
+| `userId`                 | String    | Owner                                                        |
+| `fileName`               | String    | Original filename                                            |
+| `mimeType`               | String    | PDF/image type                                               |
+| `blobPath`               | String    | Private Vercel Blob reference                                |
+| `fileSize`               | Int       | File size                                                     |
+| `pageCount`              | Int?      | Number of pages when known                                   |
+| `processingStatus`       | Enum      | Upload/processing/result/failure state                       |
+| `idempotencyKey`         | String?   | Client-generated per upload attempt; dedupes retried uploads  |
+| `extractedTextBlobPath`  | String?   | Private Blob path to Feature 09's normalized per-page text (derived content, not the original document) |
+| `processingError`        | String?   | User-safe message for the failed state (never document text) |
+| `uploadedAt`             | DateTime  | Upload timestamp                                              |
+| `deletedAt`              | DateTime? | Soft-delete timestamp if used                                 |
 
 **Relationships**
 
@@ -192,6 +195,7 @@ Represents the actionable interpretation of one uploaded document.
 | `summary`         | Text      | Plain-language explanation                                |
 | `primaryDeadline` | DateTime? | Main identified deadline                                  |
 | `status`          | Enum      | Active/completed/etc.                                     |
+| `uncertainties`   | String[]  | Genuinely ambiguous/unclear points flagged by the AI       |
 | `createdAt`       | DateTime  | Creation time                                             |
 | `updatedAt`       | DateTime  | Last update                                               |
 
@@ -424,6 +428,16 @@ Case ready
 
 The original document is never modified.
 
+`trigger/documents/process.ts` implements File validation → PDF/image parsing → OCR when
+required → Page/text normalization (`lib/documents/parse.ts`, `lib/ocr/`) — the first four
+steps. Text embedded in a PDF page is read directly (`unpdf`); a page with none (scanned PDF
+page, extracted to a standalone one-page PDF via `pdf-lib`, or a photographed image upload) goes
+through `lib/ocr/`'s vision-model OCR (`openai/gpt-6-luna` via the AI Gateway). Normalized
+per-page text is stored as a derived Blob (`Document.extractedTextBlobPath`), not in Postgres —
+see the Storage Model above. This stage leaves `processingStatus` at `processing`; AI
+classification → Structured extraction → Validation → Persistence → Case ready is Feature 10's
+job, which is what actually reaches `ready`.
+
 ### Failure Handling
 
 If processing fails:
@@ -534,7 +548,9 @@ NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
 CLERK_SECRET_KEY=
 
 # AI
-OPENAI_API_KEY=
+# Model calls go through the Vercel AI Gateway, not a direct provider SDK —
+# plain "provider/model" strings (e.g. "openai/gpt-6-luna" in lib/ocr/).
+AI_GATEWAY_API_KEY=
 
 # Blob Storage
 BLOB_READ_WRITE_TOKEN=
@@ -555,7 +571,7 @@ NEXT_PUBLIC_APP_URL=
 
 * Keep all secret keys server-side.
 * Only variables explicitly required in browser code should use `NEXT_PUBLIC_`.
-* `OPENAI_API_KEY`, database credentials, Blob credentials, and Trigger credentials must never be exposed to the client.
+* `AI_GATEWAY_API_KEY`, database credentials, Blob credentials, and Trigger credentials must never be exposed to the client.
 * Production and development environments should use separate credentials and storage.
 * Uploaded documents must use private storage.
 * AI and processing credentials should be rotatable without code changes.

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Show } from "@clerk/nextjs";
 import { buttonVariants } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Footer } from "@/components/footer";
 
 const HOW_IT_WORKS = [
@@ -65,10 +66,7 @@ export default function Home() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mt-6 md:mt-8">
             {HOW_IT_WORKS.map((item) => (
-              <div
-                key={item.step}
-                className="rounded-none border-2 md:border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] bg-white p-4 md:p-6"
-              >
+              <Card key={item.step}>
                 <span className="font-mono text-xs uppercase tracking-wider text-black/60">
                   Step {item.step}
                 </span>
@@ -78,7 +76,7 @@ export default function Home() {
                 <p className="font-mono text-sm md:text-base leading-relaxed mt-2 text-black/80">
                   {item.description}
                 </p>
-              </div>
+              </Card>
             ))}
           </div>
         </div>
@@ -95,10 +93,7 @@ export default function Home() {
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mt-6 md:mt-8">
             {VALUE_PROPS.map((item) => (
-              <div
-                key={item.label}
-                className="rounded-none border-2 md:border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] bg-white p-4 md:p-6"
-              >
+              <Card key={item.label}>
                 <span
                   className="inline-block font-mono text-xs uppercase tracking-wider border-2 border-black px-2 py-1"
                   style={{ backgroundColor: item.accent }}
@@ -108,7 +103,7 @@ export default function Home() {
                 <p className="font-mono text-sm md:text-base leading-relaxed mt-3 text-black/80">
                   {item.text}
                 </p>
-              </div>
+              </Card>
             ))}
           </div>
         </div>

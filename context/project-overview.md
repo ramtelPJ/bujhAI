@@ -336,12 +336,31 @@ type Urgency =
   | "low"
   | "unknown";
 
+type EvidenceState = "explicit" | "inferred" | "unknown" | "not_found";
+
+/** A fact the model must mark rather than state as if confirmed — persisted as an `extractions` row. */
+interface EvidenceField {
+  text: string;
+  evidenceState: EvidenceState;
+  confidence: number;
+  sourcePage?: number;
+  sourceText?: string;
+}
+
 interface DocumentAnalysis {
   document: {
     type: string;
     issuer?: string;
     recipient?: string;
     issueDate?: string;
+  };
+
+  // Added during Feature 10 implementation to back the two dedicated
+  // sections Feature 08 already built (What This Is / Why You Received It) —
+  // not covered by `action.summary` alone.
+  explanation: {
+    whatThisIs: EvidenceField;
+    whyReceived: EvidenceField;
   };
 
   action: {
@@ -351,7 +370,7 @@ interface DocumentAnalysis {
   };
 
   deadlines: Array<{
-    date: string;
+    date?: string;
     description: string;
     confidence: number;
     sourcePage?: number;
@@ -372,16 +391,18 @@ interface DocumentAnalysis {
     sourcePage?: number;
   }>;
 
+  // Field names match the `submissionMethods` table (architecture-context.md),
+  // not an Array<{type, value}> pair.
   submissionMethods: Array<{
-    type: string;
-    value: string;
+    method: string;
+    destination?: string;
+    instructions?: string;
     sourcePage?: number;
   }>;
 
-  consequences?: {
-    text: string;
-    sourcePage?: number;
-  };
+  // Always present — evidenceState is "not_found" when the document states
+  // no consequence for inaction, rather than this being omitted.
+  consequences: EvidenceField;
 
   uncertainties: string[];
 
