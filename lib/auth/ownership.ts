@@ -26,3 +26,22 @@ export async function assertCaseOwner(caseId: string, userId: string): Promise<v
   if (ownerId === null) throw new Error(AUTH_ERRORS.notFound);
   if (ownerId !== userId) throw new Error(AUTH_ERRORS.forbidden);
 }
+
+/** Tasks have no direct userId — owner is the parent case's userId (see get_task_owner). */
+export async function assertTaskOwner(taskId: string, userId: string): Promise<void> {
+  const [row] = await prisma.$queryRaw<{ get_task_owner: string | null }[]>`
+    SELECT get_task_owner(${taskId})
+  `;
+  const ownerId = row?.get_task_owner ?? null;
+  if (ownerId === null) throw new Error(AUTH_ERRORS.notFound);
+  if (ownerId !== userId) throw new Error(AUTH_ERRORS.forbidden);
+}
+
+export async function assertNoteOwner(noteId: string, userId: string): Promise<void> {
+  const [row] = await prisma.$queryRaw<{ get_note_owner: string | null }[]>`
+    SELECT get_note_owner(${noteId})
+  `;
+  const ownerId = row?.get_note_owner ?? null;
+  if (ownerId === null) throw new Error(AUTH_ERRORS.notFound);
+  if (ownerId !== userId) throw new Error(AUTH_ERRORS.forbidden);
+}

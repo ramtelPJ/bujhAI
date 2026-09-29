@@ -18,6 +18,16 @@ const evidenceField = z.object({
   sourceText: z.string().optional(),
 });
 
+/** A checklist item as the model proposes it — shared by document analysis (Feature 10) and AI Help's suggested checklist items (Feature 13), both of which become a `Task` row via the same `toDate` conversion. */
+const taskItemField = z.object({
+  title: z.string().min(1),
+  description: z.string().optional(),
+  required: z.boolean(),
+  /** ISO date string. */
+  dueDate: z.string().optional(),
+  sourcePage: z.number().int().positive().optional(),
+});
+
 export const DocumentAnalysisSchema = z.object({
   document: z.object({
     type: z.string().min(1),
@@ -50,15 +60,7 @@ export const DocumentAnalysisSchema = z.object({
       sourcePage: z.number().int().positive().optional(),
     }),
   ),
-  tasks: z.array(
-    z.object({
-      title: z.string().min(1),
-      description: z.string().optional(),
-      required: z.boolean(),
-      dueDate: z.string().optional(),
-      sourcePage: z.number().int().positive().optional(),
-    }),
-  ),
+  tasks: z.array(taskItemField),
   requiredMaterials: z.array(
     z.object({
       name: z.string().min(1),
@@ -82,3 +84,17 @@ export const DocumentAnalysisSchema = z.object({
 });
 
 export type DocumentAnalysis = z.infer<typeof DocumentAnalysisSchema>;
+
+/**
+ * AI Help's response shape (Feature 13) — a grounded answer plus zero or more
+ * checklist items it's suggesting. Suggestions are never auto-persisted; a
+ * task row is only created when the user clicks Add (see
+ * app/api/cases/[id]/tasks/route.ts).
+ */
+export const AiHelpResponseSchema = z.object({
+  answer: z.string().min(1),
+  suggestedChecklistItems: z.array(taskItemField).default([]),
+});
+
+export type AiHelpResponse = z.infer<typeof AiHelpResponseSchema>;
+export type SuggestedTaskItem = z.infer<typeof taskItemField>;

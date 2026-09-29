@@ -9,7 +9,7 @@
  */
 import { prisma } from "../lib/db/client";
 import { withUser } from "../lib/db/withUser";
-import { assertDocumentOwner, assertCaseOwner } from "../lib/auth/ownership";
+import { assertDocumentOwner, assertCaseOwner, assertTaskOwner, assertNoteOwner } from "../lib/auth/ownership";
 import { AUTH_ERRORS } from "../lib/auth/errors";
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -68,6 +68,36 @@ async function main() {
     await assertDocumentOwner("does-not-exist", userA.id).then(
       () => {
         throw new Error("FAIL: assertDocumentOwner should have rejected an unknown id");
+      },
+      (err) => assert(err.message === AUTH_ERRORS.notFound, `expected notFound, got: ${err.message}`),
+    );
+
+    // Feature 12: tasks (no direct userId, owned via parent case) and case notes.
+    const task = await withUser(userA.id, (tx) =>
+      tx.task.create({ data: { caseId: caseRow.id, title: "test", description: "test", required: true } }),
+    );
+    const note = await withUser(userA.id, (tx) =>
+      tx.caseNote.create({ data: { caseId: caseRow.id, userId: userA.id, content: "test" } }),
+    );
+
+    await assertTaskOwner(task.id, userA.id);
+    await assertNoteOwner(note.id, userA.id);
+
+    await assertTaskOwner(task.id, userB.id).then(
+      () => {
+        throw new Error("FAIL: assertTaskOwner should have rejected a non-owner");
+      },
+      (err) => assert(err.message === AUTH_ERRORS.forbidden, `expected forbidden, got: ${err.message}`),
+    );
+    await assertNoteOwner(note.id, userB.id).then(
+      () => {
+        throw new Error("FAIL: assertNoteOwner should have rejected a non-owner");
+      },
+      (err) => assert(err.message === AUTH_ERRORS.forbidden, `expected forbidden, got: ${err.message}`),
+    );
+    await assertTaskOwner("does-not-exist", userA.id).then(
+      () => {
+        throw new Error("FAIL: assertTaskOwner should have rejected an unknown id");
       },
       (err) => assert(err.message === AUTH_ERRORS.notFound, `expected notFound, got: ${err.message}`),
     );

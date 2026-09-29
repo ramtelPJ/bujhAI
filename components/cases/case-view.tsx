@@ -14,10 +14,16 @@ import { AiHelpPanel } from "@/components/cases/ai-help-panel";
 import { NotesSection } from "@/components/cases/notes-section";
 import { trackClientEvent } from "@/lib/analytics/events";
 import type { CaseDetail } from "@/app/cases/[id]/get-case-detail";
+import type { SuggestedTaskItem } from "@/lib/ai/schema";
+import type { ChecklistItem } from "@/components/tasks/checklist";
 
 export function CaseView({ caseDetail, userId }: { caseDetail: CaseDetail; userId: string }) {
   const [tasks, setTasks] = useState(caseDetail.tasks);
   const [materials, setMaterials] = useState(caseDetail.requiredMaterials);
+  const [caseStatus, setCaseStatus] = useState(caseDetail.caseStatus);
+  const [confirmingComplete, setConfirmingComplete] = useState(false);
+  const [completing, setCompleting] = useState(false);
+  const [completeError, setCompleteError] = useState<string | null>(null);
 
   useEffect(() => {
     trackClientEvent("deadline_viewed", { userId, caseId: caseDetail.id });
@@ -25,12 +31,60 @@ export function CaseView({ caseDetail, userId }: { caseDetail: CaseDetail; userI
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseDetail.id]);
 
-  function toggleTask(id: string) {
-    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)));
+  async function toggleTask(id: string) {
+    const next = !tasks.find((t) => t.id === id)?.completed;
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, completed: next } : t)));
+    try {
+      const res = await fetch(`/api/tasks/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ completed: next }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      // Roll back on failure — the checklist should reflect what's actually persisted.
+      setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, completed: !next } : t)));
+    }
   }
 
   function toggleMaterial(id: string) {
     setMaterials((prev) => prev.map((m) => (m.id === id ? { ...m, completed: !m.completed } : m)));
+  }
+
+  /** AI Help's "Add to checklist" (Feature 13) — persists the suggestion as a real task. */
+  async function handleAddTask(item: SuggestedTaskItem): Promise<boolean> {
+    try {
+      const res = await fetch(`/api/cases/${caseDetail.id}/tasks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(item),
+      });
+      if (!res.ok) throw new Error();
+      const created: ChecklistItem = await res.json();
+      setTasks((prev) => [...prev, created]);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async function handleMarkComplete() {
+    setCompleting(true);
+    setCompleteError(null);
+    try {
+      const res = await fetch(`/api/cases/${caseDetail.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "completed" }),
+      });
+      if (!res.ok) throw new Error();
+      setCaseStatus("completed");
+      setConfirmingComplete(false);
+    } catch {
+      setCompleteError("Something went wrong. Please try again.");
+    } finally {
+      setCompleting(false);
+    }
   }
 
   const report = (errorType: string) => ({ userId, caseId: caseDetail.id, errorType });
@@ -41,7 +95,7 @@ export function CaseView({ caseDetail, userId }: { caseDetail: CaseDetail; userI
         documentType={caseDetail.documentType}
         issuer={caseDetail.issuer}
         issueDate={caseDetail.issueDate}
-        caseStatus={caseDetail.caseStatus}
+        caseStatus={caseStatus}
       />
 
       <FactSection heading="What This Is" value={caseDetail.whatThisIs} report={report("whatThisIs")} />
@@ -102,17 +156,42 @@ export function CaseView({ caseDetail, userId }: { caseDetail: CaseDetail; userI
         </a>
       </Card>
 
-      <AiHelpPanel />
+      <AiHelpPanel caseId={caseDetail.id} initialMessages={caseDetail.conversationMessages} onAddTask={handleAddTask} />
 
-      <NotesSection initialNotes={caseDetail.notes} />
+      <NotesSection caseId={caseDetail.id} initialNotes={caseDetail.notes} />
 
-      <Card className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <p className="font-mono text-sm md:text-base text-black/80">
-          Done with this case? Mark it complete — the document and your history stay accessible.
-        </p>
-        <Button variant="secondary" className="shrink-0">
-          Mark Case Complete
-        </Button>
+      <Card className="flex flex-col gap-4">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <p className="font-mono text-sm md:text-base text-black/80">
+            {caseStatus === "completed"
+              ? "This case is marked complete. The document and history stay accessible."
+              : "Done with this case? Mark it complete — the document and your history stay accessible."}
+          </p>
+          {caseStatus !== "completed" &&
+            (confirmingComplete ? (
+              <div className="flex gap-2 shrink-0">
+                <Button variant="secondary" onClick={handleMarkComplete} disabled={completing}>
+                  {completing ? "Marking Complete…" : "Confirm"}
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => setConfirmingComplete(false)}
+                  disabled={completing}
+                >
+                  Cancel
+                </Button>
+              </div>
+            ) : (
+              <Button variant="secondary" className="shrink-0" onClick={() => setConfirmingComplete(true)}>
+                Mark Case Complete
+              </Button>
+            ))}
+        </div>
+        {completeError && (
+          <div className="rounded-none border-2 border-black bg-[#ff006e] text-white font-mono text-xs md:text-sm px-3 py-2 md:px-4 md:py-3">
+            {completeError}
+          </div>
+        )}
       </Card>
     </div>
   );

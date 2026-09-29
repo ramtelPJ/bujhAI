@@ -8,6 +8,7 @@ import type { DeadlineView } from "@/components/cases/deadline-section";
 import type { SubmissionMethodView } from "@/components/cases/submission-section";
 import type { ChecklistItem } from "@/components/tasks/checklist";
 import type { NoteView } from "@/components/cases/notes-section";
+import type { MessageView } from "@/components/cases/ai-help-panel";
 
 export interface CaseDetail {
   id: string;
@@ -25,6 +26,8 @@ export interface CaseDetail {
   consequences: EvidenceValue | null;
   uncertainties: string[];
   notes: NoteView[];
+  /** The case's existing AI Help conversation, if one exists yet (oldest first). */
+  conversationMessages: MessageView[];
   /** Short-lived signed URL — never a permanent public link (architecture-context.md Access Model). */
   originalDocumentUrl: string;
 }
@@ -83,6 +86,12 @@ async function loadReadyCase(caseId: string, userId: string): Promise<CaseDetail
         tasks: true,
         requiredMaterials: true,
         submissionMethods: true,
+        notes: { orderBy: { createdAt: "desc" } },
+        conversations: {
+          where: { userId },
+          take: 1,
+          include: { messages: { orderBy: { createdAt: "asc" } } },
+        },
       },
     }),
   );
@@ -134,8 +143,17 @@ async function loadReadyCase(caseId: string, userId: string): Promise<CaseDetail
     })),
     consequences: extractionValue(caseRow.extractions, "consequences"),
     uncertainties: caseRow.uncertainties,
-    // Real caseNotes create/update is Feature 12 — nothing to read yet either way.
-    notes: [],
+    notes: caseRow.notes.map((n) => ({
+      id: n.id,
+      content: n.content,
+      createdAt: n.createdAt.toISOString(),
+    })),
+    conversationMessages: (caseRow.conversations[0]?.messages ?? []).map((m) => ({
+      id: m.id,
+      role: m.role,
+      content: m.content,
+      createdAt: m.createdAt.toISOString(),
+    })),
     originalDocumentUrl,
   };
 }
