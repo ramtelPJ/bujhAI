@@ -45,3 +45,6 @@ next-env.d.ts
 
 # trigger.dev local dev state
 .trigger
+
+# project planning/spec docs — kept locally, not pushed (public repo)
+/context
