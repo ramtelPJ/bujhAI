@@ -14,7 +14,7 @@ export function CaseHeader({ documentType, issuer, issueDate, caseStatus }: Case
     <div className="flex flex-col gap-4">
       <Link
         href="/dashboard"
-        className="font-mono text-xs md:text-sm uppercase tracking-wider hover:underline w-fit"
+        className="font-mono text-xs md:text-sm uppercase tracking-wider hover:underline w-fit focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#00d9ff] focus-visible:ring-offset-2"
       >
         ← Back to Dashboard
       </Link>

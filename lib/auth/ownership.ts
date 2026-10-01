@@ -45,3 +45,12 @@ export async function assertNoteOwner(noteId: string, userId: string): Promise<v
   if (ownerId === null) throw new Error(AUTH_ERRORS.notFound);
   if (ownerId !== userId) throw new Error(AUTH_ERRORS.forbidden);
 }
+
+export async function assertDraftOwner(draftId: string, userId: string): Promise<void> {
+  const [row] = await prisma.$queryRaw<{ get_draft_owner: string | null }[]>`
+    SELECT get_draft_owner(${draftId})
+  `;
+  const ownerId = row?.get_draft_owner ?? null;
+  if (ownerId === null) throw new Error(AUTH_ERRORS.notFound);
+  if (ownerId !== userId) throw new Error(AUTH_ERRORS.forbidden);
+}

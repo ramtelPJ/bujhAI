@@ -3,12 +3,14 @@ import { DocumentAnalysisSchema, type DocumentAnalysis } from "./schema";
 import type { ParsedPage } from "@/lib/documents/parse";
 
 /**
- * openai/gpt-6 via the Vercel AI Gateway — full-tier reasoning model, unlike
- * the "-luna" tier lib/ocr/index.ts uses for cheap page transcription.
- * Structured legal/financial/administrative extraction needs the stronger
- * model; latency doesn't matter since this runs in a background job.
+ * openai/gpt-4.1 via the Vercel AI Gateway. The newer gpt-6.x/gpt-5.x tiers
+ * return "Free tier users do not have access to this model" on this account
+ * (confirmed against the live Gateway — a Vercel AI Gateway credit balance
+ * restriction, not something fixable in code); gpt-4.1 is the strongest
+ * model actually reachable right now. Revisit once the Gateway account has
+ * paid credits (see https://vercel.com/docs/ai-gateway for current tiers).
  */
-const ANALYSIS_MODEL = "openai/gpt-6";
+const ANALYSIS_MODEL = "openai/gpt-4.1";
 
 /** Retried once on invalid output before the caller marks analysis failed. */
 const MAX_ATTEMPTS = 2;
@@ -22,11 +24,13 @@ Rules:
 issuer, program, or process beyond what the document itself says.
 - Never invent a deadline, requirement, contact method, or consequence that the document does \
 not support.
-- For document.type/issuer/recipient/issueDate, explanation.whatThisIs, explanation.whyReceived, \
-and consequences, mark evidenceState honestly: "explicit" (directly stated), "inferred" (a \
-reasonable interpretation from context), "unknown" (cannot be determined from this document), or \
-"not_found" (you looked and it isn't there). When evidenceState is "not_found", still return the \
-field with empty or minimal text — never fabricate content to fill it.
+- For explanation.whatThisIs, explanation.whyReceived, and consequences, mark evidenceState \
+honestly: "explicit" (directly stated), "inferred" (a reasonable interpretation from context), \
+"unknown" (cannot be determined from this document), or "not_found" (you looked and it isn't \
+there). When evidenceState is "not_found", still return the field with empty or minimal text — \
+never fabricate content to fill it.
+- document.issuer/recipient/issueDate have no evidenceState — only report a value there when \
+the document actually states it; use null when it doesn't, rather than guessing.
 - Cite sourcePage (and sourceText when it helps) for explanation.whatThisIs, \
 explanation.whyReceived, consequences, and every deadline/task/requiredMaterial/submissionMethod, \
 whenever you can identify the supporting page.

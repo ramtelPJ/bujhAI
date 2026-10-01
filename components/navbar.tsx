@@ -13,7 +13,10 @@ export function Navbar() {
   return (
     <nav className="bg-white border-b-2 md:border-b-4 border-black px-4 md:px-8 lg:px-12">
       <div className="flex items-center justify-between max-w-6xl mx-auto gap-4 md:gap-6 py-4 md:py-6">
-        <Link href="/" className="shrink-0">
+        <Link
+          href="/"
+          className="shrink-0 flex items-center gap-2 md:gap-3 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#00d9ff] focus-visible:ring-offset-2"
+        >
           <Image
             src="/logo.png"
             alt="bujhAI"
@@ -22,10 +25,22 @@ export function Navbar() {
             priority
             className="h-8 md:h-10 w-auto"
           />
+          <Image
+            src="/user-logo.png"
+            alt=""
+            width={116}
+            height={116}
+            priority
+            className="h-8 md:h-10 w-auto"
+          />
         </Link>
         <div className="flex items-center gap-4 md:gap-6 font-mono text-xs md:text-sm uppercase tracking-wider">
           {NAV_LINKS.map((link) => (
-            <Link key={link.href} href={link.href} className="hover:underline">
+            <Link
+              key={link.href}
+              href={link.href}
+              className="hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#00d9ff] focus-visible:ring-offset-2"
+            >
               {link.label}
             </Link>
           ))}

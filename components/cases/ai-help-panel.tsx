@@ -132,7 +132,7 @@ export function AiHelpPanel({ caseId, initialMessages, onAddTask }: AiHelpPanelP
       {asking && <p className="font-mono text-sm text-black/60 mt-3">Thinking…</p>}
 
       {error && (
-        <div className="rounded-none border-2 border-black bg-[#ff006e] text-white font-mono text-xs md:text-sm px-3 py-2 md:px-4 md:py-3 mt-3">
+        <div className="rounded-none border-2 border-black bg-[#ff006e] text-black font-mono text-xs md:text-sm px-3 py-2 md:px-4 md:py-3 mt-3">
           {error}
         </div>
       )}
@@ -144,7 +144,7 @@ export function AiHelpPanel({ caseId, initialMessages, onAddTask }: AiHelpPanelP
             type="button"
             disabled={asking}
             onClick={() => ask(question)}
-            className="font-mono text-xs md:text-sm border-2 border-black px-3 py-1.5 bg-white hover:bg-[#ccff00] transition-colors duration-150 disabled:opacity-50 disabled:pointer-events-none"
+            className="font-mono text-xs md:text-sm border-2 border-black px-3 py-1.5 bg-white hover:bg-[#ccff00] transition-colors duration-150 ease-out disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#00d9ff] focus-visible:ring-offset-2"
           >
             {question}
           </button>

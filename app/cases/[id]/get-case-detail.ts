@@ -9,9 +9,12 @@ import type { SubmissionMethodView } from "@/components/cases/submission-section
 import type { ChecklistItem } from "@/components/tasks/checklist";
 import type { NoteView } from "@/components/cases/notes-section";
 import type { MessageView } from "@/components/cases/ai-help-panel";
+import { pickPrimaryDeadline, UNCERTAIN_CONFIDENCE_THRESHOLD } from "@/lib/cases/deadline";
 
 export interface CaseDetail {
   id: string;
+  /** The source document's id — Delete Document (Feature 15) targets `/api/documents/[id]`, not the case. */
+  documentId: string;
   documentType: string;
   issuer: string | null;
   issueDate: string | null;
@@ -58,21 +61,9 @@ function extractionValue(extractions: ExtractionRow[], field: string): EvidenceV
  * Deadline rows store a numeric confidence, not an evidenceState (architecture-context.md
  * only puts evidenceState on `extractions`) — DeadlineView (Feature 08) wants an evidence
  * tag, so this derives one from confidence.
- * ponytail: flat threshold, add a real evidenceState column on Deadline if this needs to
- * be more precise than "confident" vs "uncertain".
  */
 function confidenceToEvidenceState(confidence: number): EvidenceState {
-  return confidence >= 0.7 ? "explicit" : "inferred";
-}
-
-/** The dashboard's `primaryDeadline` pick, mapped back to its source row for description/evidence. */
-function pickPrimaryDeadline<T extends { date: Date | null }>(deadlines: T[], primaryDeadline: Date | null): T | null {
-  if (deadlines.length === 0) return null;
-  if (primaryDeadline) {
-    const match = deadlines.find((d) => d.date && d.date.getTime() === primaryDeadline.getTime());
-    if (match) return match;
-  }
-  return deadlines[0];
+  return confidence >= UNCERTAIN_CONFIDENCE_THRESHOLD ? "explicit" : "inferred";
 }
 
 async function loadReadyCase(caseId: string, userId: string): Promise<CaseDetail> {
@@ -102,6 +93,7 @@ async function loadReadyCase(caseId: string, userId: string): Promise<CaseDetail
 
   return {
     id: caseRow.id,
+    documentId: caseRow.documentId,
     documentType: caseRow.documentType,
     issuer: caseRow.issuer,
     issueDate: caseRow.issueDate?.toISOString() ?? null,

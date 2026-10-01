@@ -9,7 +9,13 @@
  */
 import { prisma } from "../lib/db/client";
 import { withUser } from "../lib/db/withUser";
-import { assertDocumentOwner, assertCaseOwner, assertTaskOwner, assertNoteOwner } from "../lib/auth/ownership";
+import {
+  assertDocumentOwner,
+  assertCaseOwner,
+  assertTaskOwner,
+  assertNoteOwner,
+  assertDraftOwner,
+} from "../lib/auth/ownership";
 import { AUTH_ERRORS } from "../lib/auth/errors";
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -100,6 +106,105 @@ async function main() {
         throw new Error("FAIL: assertTaskOwner should have rejected an unknown id");
       },
       (err) => assert(err.message === AUTH_ERRORS.notFound, `expected notFound, got: ${err.message}`),
+    );
+
+    // Feature 14: drafts (direct userId, same shape as documents/cases).
+    const draft = await withUser(userA.id, (tx) =>
+      tx.draft.create({ data: { caseId: caseRow.id, userId: userA.id, type: "email", content: "test" } }),
+    );
+
+    await assertDraftOwner(draft.id, userA.id);
+
+    await assertDraftOwner(draft.id, userB.id).then(
+      () => {
+        throw new Error("FAIL: assertDraftOwner should have rejected a non-owner");
+      },
+      (err) => assert(err.message === AUTH_ERRORS.forbidden, `expected forbidden, got: ${err.message}`),
+    );
+    await assertDraftOwner("does-not-exist", userA.id).then(
+      () => {
+        throw new Error("FAIL: assertDraftOwner should have rejected an unknown id");
+      },
+      (err) => assert(err.message === AUTH_ERRORS.notFound, `expected notFound, got: ${err.message}`),
+    );
+
+    // Feature 20 hardening: the remaining tables never get a direct ownership-assert
+    // function (nothing addresses them by their own id in any route — they're only ever
+    // read as children of a case/conversation the caller already owns), so RLS itself,
+    // not an assert*Owner helper, is what's under test here. Two-user coverage was
+    // previously only implied transitively; assert it directly per table.
+    const extraction = await withUser(userA.id, (tx) =>
+      tx.extraction.create({
+        data: { caseId: caseRow.id, field: "whatThisIs", value: { text: "test" }, confidence: 0.9, evidenceState: "explicit" },
+      }),
+    );
+    const deadline = await withUser(userA.id, (tx) =>
+      tx.deadline.create({ data: { caseId: caseRow.id, description: "test", confidence: 0.9 } }),
+    );
+    const material = await withUser(userA.id, (tx) =>
+      tx.requiredMaterial.create({ data: { caseId: caseRow.id, name: "test", required: true } }),
+    );
+    const submissionMethod = await withUser(userA.id, (tx) =>
+      tx.submissionMethod.create({ data: { caseId: caseRow.id, method: "test" } }),
+    );
+    const conversation = await withUser(userA.id, (tx) =>
+      tx.conversation.create({ data: { caseId: caseRow.id, userId: userA.id } }),
+    );
+    const message = await withUser(userA.id, (tx) =>
+      tx.message.create({ data: { conversationId: conversation.id, role: "user", content: "test" } }),
+    );
+
+    assert(
+      (await withUser(userA.id, (tx) => tx.extraction.findUnique({ where: { id: extraction.id } }))) !== null,
+      "owner should see their own extraction through RLS",
+    );
+    assert(
+      (await withUser(userB.id, (tx) => tx.extraction.findUnique({ where: { id: extraction.id } }))) === null,
+      "RLS should hide another user's extraction",
+    );
+    assert(
+      (await withUser(userA.id, (tx) => tx.deadline.findUnique({ where: { id: deadline.id } }))) !== null,
+      "owner should see their own deadline through RLS",
+    );
+    assert(
+      (await withUser(userB.id, (tx) => tx.deadline.findUnique({ where: { id: deadline.id } }))) === null,
+      "RLS should hide another user's deadline",
+    );
+    assert(
+      (await withUser(userA.id, (tx) => tx.requiredMaterial.findUnique({ where: { id: material.id } }))) !== null,
+      "owner should see their own required material through RLS",
+    );
+    assert(
+      (await withUser(userB.id, (tx) => tx.requiredMaterial.findUnique({ where: { id: material.id } }))) === null,
+      "RLS should hide another user's required material",
+    );
+    assert(
+      (await withUser(userA.id, (tx) =>
+        tx.submissionMethod.findUnique({ where: { id: submissionMethod.id } }),
+      )) !== null,
+      "owner should see their own submission method through RLS",
+    );
+    assert(
+      (await withUser(userB.id, (tx) =>
+        tx.submissionMethod.findUnique({ where: { id: submissionMethod.id } }),
+      )) === null,
+      "RLS should hide another user's submission method",
+    );
+    assert(
+      (await withUser(userA.id, (tx) => tx.conversation.findUnique({ where: { id: conversation.id } }))) !== null,
+      "owner should see their own conversation through RLS",
+    );
+    assert(
+      (await withUser(userB.id, (tx) => tx.conversation.findUnique({ where: { id: conversation.id } }))) === null,
+      "RLS should hide another user's conversation",
+    );
+    assert(
+      (await withUser(userA.id, (tx) => tx.message.findUnique({ where: { id: message.id } }))) !== null,
+      "owner should see their own message through RLS",
+    );
+    assert(
+      (await withUser(userB.id, (tx) => tx.message.findUnique({ where: { id: message.id } }))) === null,
+      "RLS should hide another user's message",
     );
 
     console.log("PASS: RLS and ownership helpers behave correctly.");

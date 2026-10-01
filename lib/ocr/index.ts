@@ -1,12 +1,14 @@
 import { generateText } from "ai";
 
 /**
- * openai/gpt-6-luna via the Vercel AI Gateway: vision-capable, priced for
- * high-volume/cost-sensitive extraction (see openai/gpt-6-luna's gateway
- * listing) — a good fit for per-page OCR. Not the "-fast" tier since this
- * runs in a background job where latency doesn't matter.
+ * openai/gpt-4.1-mini via the Vercel AI Gateway: vision-capable and cheap,
+ * a good fit for per-page OCR. The "-luna"/"-sol" tiers return "Free tier
+ * users do not have access to this model" on this account (a Vercel AI
+ * Gateway credit balance restriction, confirmed against the live Gateway,
+ * not fixable in code) — see lib/ai/analyze-document.ts's ANALYSIS_MODEL
+ * comment for the same issue on the analysis/chat/draft models.
  */
-const OCR_MODEL = "openai/gpt-6-luna";
+const OCR_MODEL = "openai/gpt-4.1-mini";
 
 const OCR_PROMPT =
   "Transcribe every word of readable text from this document page, in reading order. " +

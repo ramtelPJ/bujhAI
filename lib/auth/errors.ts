@@ -31,6 +31,12 @@ const VERIFICATION_CODES = new Set([
   "verification_failed",
   "verification_already_verified",
 ]);
+/**
+ * There is no custom rate-limiting in this app — login/verification throttling relies
+ * entirely on Clerk's own backend, which is what actually produces `too_many_requests`.
+ * If that assumption ever needs to be independently enforced (e.g. a WAF/firewall rate
+ * limit rule), this is the only place the app currently distinguishes the case.
+ */
 const RATE_LIMIT_CODES = new Set(["too_many_requests"]);
 
 function fieldError(error: ClerkFutureError) {

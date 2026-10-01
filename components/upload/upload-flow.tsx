@@ -111,11 +111,8 @@ export function UploadFlow({ userId }: { userId: string }) {
         return;
       }
 
-      trackClientEvent("document_uploaded", {
-        userId,
-        fileType: body.mimeType,
-        pageCount: body.pageCount,
-      });
+      // document_uploaded fires server-side (app/api/documents/route.ts) — firing it
+      // here too would double-count every upload in PostHog.
       setDocumentId(body.id);
       // Upload step done; the pipeline's own stages (parse/OCR, and once
       // Feature 10 exists, AI analysis) aren't individually observable yet,
@@ -167,7 +164,7 @@ export function UploadFlow({ userId }: { userId: string }) {
         </div>
 
         {error && (
-          <div className="rounded-none border-2 border-black bg-[#ff006e] text-white font-mono text-xs md:text-sm px-3 py-2 md:px-4 md:py-3">
+          <div className="rounded-none border-2 border-black bg-[#ff006e] text-black font-mono text-xs md:text-sm px-3 py-2 md:px-4 md:py-3">
             {error}
           </div>
         )}

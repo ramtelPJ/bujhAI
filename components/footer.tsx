@@ -13,7 +13,10 @@ export function Footer() {
     <footer className="bg-black text-white py-12 md:py-24 px-4 md:px-8 lg:px-12">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
         <div>
-          <Link href="/" className="inline-block bg-white border-2 md:border-4 border-black p-2 md:p-3">
+          <Link
+            href="/"
+            className="inline-block bg-white border-2 md:border-4 border-black p-2 md:p-3 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#00d9ff] focus-visible:ring-offset-2"
+          >
             <Image
               src="/logo.png"
               alt="bujhAI"
@@ -33,7 +36,10 @@ export function Footer() {
           <ul className="font-mono text-xs md:text-sm mt-2 flex flex-col gap-2">
             {FOOTER_LINKS.map((link) => (
               <li key={link.label}>
-                <Link href={link.href} className="hover:underline">
+                <Link
+                  href={link.href}
+                  className="hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#00d9ff] focus-visible:ring-offset-2"
+                >
                   {link.label}
                 </Link>
               </li>

@@ -11,7 +11,7 @@ type Mode = "login" | "signup" | "verify";
 
 const LABEL_CLASSES = "font-mono text-xs uppercase tracking-wider";
 const TAB_BASE =
-  "flex-1 rounded-none border-2 md:border-4 border-black font-black uppercase text-xs md:text-sm px-4 py-2 md:py-3 transition-all duration-200";
+  "flex-1 rounded-none border-2 md:border-4 border-black font-black uppercase text-xs md:text-sm px-4 py-2 md:py-3 transition-all duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#00d9ff] focus-visible:ring-offset-2";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -99,14 +99,14 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => switchMode("login")}
-              className={`${TAB_BASE} ${mode === "login" ? "bg-[#ff006e] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]" : "bg-white text-black shadow-none"}`}
+              className={`${TAB_BASE} ${mode === "login" ? "bg-[#ff006e] text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]" : "bg-white text-black shadow-none"}`}
             >
               Log In
             </button>
             <button
               type="button"
               onClick={() => switchMode("signup")}
-              className={`${TAB_BASE} ${mode === "signup" ? "bg-[#ff006e] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]" : "bg-white text-black shadow-none"}`}
+              className={`${TAB_BASE} ${mode === "signup" ? "bg-[#ff006e] text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]" : "bg-white text-black shadow-none"}`}
             >
               Sign Up
             </button>
@@ -117,7 +117,7 @@ export default function LoginPage() {
           {/* Required by Clerk's bot-protection CAPTCHA for custom sign-up flows: https://clerk.com/docs/guides/development/custom-flows/authentication/bot-sign-up-protection */}
           <div id="clerk-captcha" />
           {error && (
-            <div className="mb-4 md:mb-6 rounded-none border-2 border-black bg-[#ff006e] text-white font-mono text-xs md:text-sm px-3 py-2 md:px-4 md:py-3">
+            <div className="mb-4 md:mb-6 rounded-none border-2 border-black bg-[#ff006e] text-black font-mono text-xs md:text-sm px-3 py-2 md:px-4 md:py-3">
               {error}
             </div>
           )}
@@ -180,7 +180,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={handleResendCode}
-                className="font-mono text-xs uppercase tracking-wider underline self-start"
+                className="font-mono text-xs uppercase tracking-wider underline self-start focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#00d9ff] focus-visible:ring-offset-2"
               >
                 Resend Code
               </button>

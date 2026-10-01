@@ -16,7 +16,7 @@ export function ProcessingSteps({ currentStep }: ProcessingStepsProps) {
             <li key={step} className="flex items-center gap-3 md:gap-4">
               <span
                 className={`shrink-0 flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-none border-2 md:border-4 border-black font-black text-sm md:text-base ${
-                  isDone ? "bg-[#ccff00]" : isActive ? "bg-[#ff006e] text-white" : "bg-white text-black/60"
+                  isDone ? "bg-[#ccff00]" : isActive ? "bg-[#ff006e] text-black" : "bg-white text-black/60"
                 }`}
               >
                 {isDone ? "✓" : i + 1}

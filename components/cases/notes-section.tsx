@@ -100,11 +100,11 @@ export function NotesSection({ caseId, initialNotes }: { caseId: string; initial
             <div key={note.id} className="border-2 border-black p-3">
               <p className="font-mono text-sm md:text-base whitespace-pre-wrap">{note.content}</p>
               <div className="flex items-center justify-between gap-2 mt-1">
-                <p className="font-mono text-xs text-black/50">{formatDate(note.createdAt)}</p>
+                <p className="font-mono text-xs text-black/60">{formatDate(note.createdAt)}</p>
                 <button
                   type="button"
                   onClick={() => startEdit(note)}
-                  className="font-mono text-xs uppercase tracking-wider hover:underline"
+                  className="font-mono text-xs uppercase tracking-wider hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#00d9ff] focus-visible:ring-offset-2"
                 >
                   Edit
                 </button>
@@ -115,7 +115,7 @@ export function NotesSection({ caseId, initialNotes }: { caseId: string; initial
       </div>
 
       {error && (
-        <div className="rounded-none border-2 border-black bg-[#ff006e] text-white font-mono text-xs md:text-sm px-3 py-2 md:px-4 md:py-3 mt-3">
+        <div className="rounded-none border-2 border-black bg-[#ff006e] text-black font-mono text-xs md:text-sm px-3 py-2 md:px-4 md:py-3 mt-3">
           {error}
         </div>
       )}

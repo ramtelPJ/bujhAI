@@ -13,7 +13,10 @@
 }
 
 body {
-  @apply bg-background text-foreground font-sans antialiased;
+  /* font-mono, not font-sans — frontend-design.md's Typography spec has no proportional-sans
+     role at all ("Body: font-mono"); font-sans would only ever surface as an unstyled fallback,
+     and it maps to Geist Sans, one of the explicitly banned overused fonts. */
+  @apply bg-background text-foreground font-mono antialiased;
 }
 
 @media (prefers-reduced-motion: reduce) {

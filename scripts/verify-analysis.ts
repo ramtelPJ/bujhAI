@@ -20,16 +20,28 @@ function assert(condition: unknown, message: string): asserts condition {
 const fakeAnalysis: DocumentAnalysis = {
   document: { type: "Test Notice", issuer: "Test Issuer", recipient: "Test Recipient", issueDate: "2026-01-01" },
   explanation: {
-    whatThisIs: { text: "This is a test notice.", evidenceState: "explicit", confidence: 0.9, sourcePage: 1 },
-    whyReceived: { text: "Because this is a test.", evidenceState: "inferred", confidence: 0.6 },
+    whatThisIs: {
+      text: "This is a test notice.",
+      evidenceState: "explicit",
+      confidence: 0.9,
+      sourcePage: 1,
+      sourceText: null,
+    },
+    whyReceived: {
+      text: "Because this is a test.",
+      evidenceState: "inferred",
+      confidence: 0.6,
+      sourcePage: null,
+      sourceText: null,
+    },
   },
   // Deliberately "required" — the past deadline below must override this to "deadline_passed".
   action: { status: "required", urgency: "high", summary: "Test summary." },
   deadlines: [{ date: "2020-01-01", description: "Test deadline", confidence: 0.8, sourcePage: 2 }],
-  tasks: [{ title: "Do the test task", required: true, sourcePage: 3 }],
-  requiredMaterials: [{ name: "Test material", required: true }],
-  submissionMethods: [{ method: "Mail", destination: "123 Test St" }],
-  consequences: { text: "", evidenceState: "not_found", confidence: 0.5 },
+  tasks: [{ title: "Do the test task", description: null, required: true, dueDate: null, sourcePage: 3 }],
+  requiredMaterials: [{ name: "Test material", description: null, required: true, sourcePage: null }],
+  submissionMethods: [{ method: "Mail", destination: "123 Test St", instructions: null, sourcePage: null }],
+  consequences: { text: "", evidenceState: "not_found", confidence: 0.5, sourcePage: null, sourceText: null },
   uncertainties: ["Something is genuinely unclear."],
   confidence: 0.75,
 };

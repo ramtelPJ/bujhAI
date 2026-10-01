@@ -2,7 +2,8 @@ import { generateObject, type ModelMessage } from "ai";
 import { AiHelpResponseSchema, type AiHelpResponse } from "./schema";
 
 /** Same full-tier model as lib/ai/analyze-document.ts — grounded Q&A needs the same reasoning quality. */
-const AI_HELP_MODEL = "openai/gpt-6";
+/** See lib/ai/analyze-document.ts's ANALYSIS_MODEL comment — same Gateway tier restriction applies. */
+const AI_HELP_MODEL = "openai/gpt-4.1";
 
 /** Retried once on invalid output, same as analyzeDocument. */
 const MAX_ATTEMPTS = 2;

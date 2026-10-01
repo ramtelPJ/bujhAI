@@ -21,7 +21,7 @@ export default async function CasePage({ params }: PageProps<"/cases/[id]">) {
     const message = error instanceof Error ? error.message : AUTH_ERRORS.generic;
     return (
       <section className="bg-white text-black py-12 md:py-24 px-4 md:px-8 lg:px-12">
-        <div className="max-w-2xl mx-auto rounded-none border-2 border-black bg-[#ff006e] text-white font-mono text-sm md:text-base px-4 py-3 md:px-6 md:py-4">
+        <div className="max-w-2xl mx-auto rounded-none border-2 border-black bg-[#ff006e] text-black font-mono text-sm md:text-base px-4 py-3 md:px-6 md:py-4">
           {message}
         </div>
       </section>

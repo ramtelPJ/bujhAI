@@ -7,7 +7,8 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: "bg-[#ff006e] text-white",
+        // Black text, not white — white on #ff006e fails WCAG AA (~3.83:1); black passes (~5.48:1).
+        primary: "bg-[#ff006e] text-black",
         secondary: "bg-black text-white",
       },
       size: {

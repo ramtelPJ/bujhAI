@@ -2,7 +2,7 @@ import type { DocumentAnalysis } from "@/lib/ai/schema";
 import { withUser } from "@/lib/db/withUser";
 import type { ActionStatus } from "@/lib/generated/prisma/enums";
 
-function toDate(value: string | undefined): Date | null {
+function toDate(value: string | null | undefined): Date | null {
   if (!value) return null;
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date;

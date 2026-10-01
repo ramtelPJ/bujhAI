@@ -17,7 +17,9 @@ const STATUS_COLORS: Record<ActionStatus, string> = {
 };
 
 const STATUS_TEXT: Record<ActionStatus, string> = {
-  required: "text-white",
+  // White on #ff006e fails WCAG AA (~3.83:1) — black on the same pink passes (~5.48:1),
+  // matching the homepage's own use of this accent (app/page.tsx's VALUE_PROPS chips).
+  required: "text-black",
   recommended: "text-black",
   not_required: "text-black",
   unknown: "text-black",

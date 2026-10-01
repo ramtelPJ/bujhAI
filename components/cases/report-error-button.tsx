@@ -15,7 +15,7 @@ interface ReportErrorButtonProps {
 /** "Report an error option on extracted facts" (Feature 11) — fires the event, no backend record. */
 export function ReportErrorButton({ userId, caseId, errorType, tone = "dark" }: ReportErrorButtonProps) {
   const [reported, setReported] = useState(false);
-  const textColor = tone === "light" ? "text-white/70" : "text-black/50";
+  const textColor = tone === "light" ? "text-white/70" : "text-black/60";
 
   if (reported) {
     return <span className={`font-mono text-[10px] md:text-xs uppercase tracking-wider ${textColor}`}>Reported</span>;
@@ -28,7 +28,7 @@ export function ReportErrorButton({ userId, caseId, errorType, tone = "dark" }: 
         trackClientEvent("correction_reported", { userId, caseId, errorType });
         setReported(true);
       }}
-      className={`font-mono text-[10px] md:text-xs uppercase tracking-wider underline hover:no-underline ${textColor}`}
+      className={`font-mono text-[10px] md:text-xs uppercase tracking-wider underline hover:no-underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#00d9ff] focus-visible:ring-offset-2 ${textColor}`}
     >
       Report an error
     </button>

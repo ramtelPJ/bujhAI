@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checklist } from "@/components/tasks/checklist";
@@ -11,19 +12,26 @@ import { FactSection } from "@/components/cases/fact-section";
 import { SubmissionSection } from "@/components/cases/submission-section";
 import { UncertaintiesSection } from "@/components/cases/uncertainties-section";
 import { AiHelpPanel } from "@/components/cases/ai-help-panel";
+import { DraftPanel } from "@/components/cases/draft-panel";
 import { NotesSection } from "@/components/cases/notes-section";
 import { trackClientEvent } from "@/lib/analytics/events";
 import type { CaseDetail } from "@/app/cases/[id]/get-case-detail";
 import type { SuggestedTaskItem } from "@/lib/ai/schema";
 import type { ChecklistItem } from "@/components/tasks/checklist";
 
+const DELETE_FAILED_ERROR = "We couldn't delete this document. Please try again.";
+
 export function CaseView({ caseDetail, userId }: { caseDetail: CaseDetail; userId: string }) {
+  const router = useRouter();
   const [tasks, setTasks] = useState(caseDetail.tasks);
   const [materials, setMaterials] = useState(caseDetail.requiredMaterials);
   const [caseStatus, setCaseStatus] = useState(caseDetail.caseStatus);
   const [confirmingComplete, setConfirmingComplete] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [completeError, setCompleteError] = useState<string | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     trackClientEvent("deadline_viewed", { userId, caseId: caseDetail.id });
@@ -87,6 +95,20 @@ export function CaseView({ caseDetail, userId }: { caseDetail: CaseDetail; userI
     }
   }
 
+  /** Delete document button on the case page (Feature 15) — redirects to the dashboard on success. */
+  async function handleDelete() {
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch(`/api/documents/${caseDetail.documentId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      router.push("/dashboard");
+    } catch {
+      setDeleteError(DELETE_FAILED_ERROR);
+      setDeleting(false);
+    }
+  }
+
   const report = (errorType: string) => ({ userId, caseId: caseDetail.id, errorType });
 
   return (
@@ -133,27 +155,46 @@ export function CaseView({ caseDetail, userId }: { caseDetail: CaseDetail; userI
 
       <FactSection heading="If You Do Nothing" value={caseDetail.consequences} report={report("consequences")} />
 
-      <Card>
-        <h2 className="font-black tracking-tight text-xl md:text-2xl">Next Step</h2>
-        <p className="font-mono text-sm md:text-base mt-2 text-black/80">
-          bujhAI can draft a response, email, or letter based on this case. You always review
-          and send it yourself — bujhAI never sends anything for you.
-        </p>
-        <Button className="mt-4">Draft a Response</Button>
-      </Card>
+      <DraftPanel caseId={caseDetail.id} />
 
       <UncertaintiesSection items={caseDetail.uncertainties} />
 
-      <Card>
-        <h2 className="font-black tracking-tight text-xl md:text-2xl">Original Document</h2>
-        <a
-          href={caseDetail.originalDocumentUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-block font-mono text-sm md:text-base mt-2 underline hover:no-underline"
-        >
-          View Original Document
-        </a>
+      <Card className="flex flex-col gap-4">
+        <div>
+          <h2 className="font-black tracking-tight text-xl md:text-2xl">Original Document</h2>
+          <a
+            href={caseDetail.originalDocumentUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block font-mono text-sm md:text-base mt-2 underline hover:no-underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#00d9ff] focus-visible:ring-offset-2"
+          >
+            View Original Document
+          </a>
+        </div>
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pt-4 border-t-2 border-black/10">
+          <p className="font-mono text-sm md:text-base text-black/80">
+            Deleting removes this document, its case, and all history — this can&apos;t be undone.
+          </p>
+          {confirmingDelete ? (
+            <div className="flex gap-2 shrink-0">
+              <Button variant="secondary" onClick={handleDelete} disabled={deleting}>
+                {deleting ? "Deleting…" : "Confirm Delete"}
+              </Button>
+              <Button variant="secondary" onClick={() => setConfirmingDelete(false)} disabled={deleting}>
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <Button variant="secondary" className="shrink-0" onClick={() => setConfirmingDelete(true)}>
+              Delete Document
+            </Button>
+          )}
+        </div>
+        {deleteError && (
+          <div className="rounded-none border-2 border-black bg-[#ff006e] text-black font-mono text-xs md:text-sm px-3 py-2 md:px-4 md:py-3">
+            {deleteError}
+          </div>
+        )}
       </Card>
 
       <AiHelpPanel caseId={caseDetail.id} initialMessages={caseDetail.conversationMessages} onAddTask={handleAddTask} />
@@ -188,7 +229,7 @@ export function CaseView({ caseDetail, userId }: { caseDetail: CaseDetail; userI
             ))}
         </div>
         {completeError && (
-          <div className="rounded-none border-2 border-black bg-[#ff006e] text-white font-mono text-xs md:text-sm px-3 py-2 md:px-4 md:py-3">
+          <div className="rounded-none border-2 border-black bg-[#ff006e] text-black font-mono text-xs md:text-sm px-3 py-2 md:px-4 md:py-3">
             {completeError}
           </div>
         )}

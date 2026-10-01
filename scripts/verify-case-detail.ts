@@ -17,17 +17,29 @@ function assert(condition: unknown, message: string): asserts condition {
 }
 
 const fakeAnalysis: DocumentAnalysis = {
-  document: { type: "Test Notice", issuer: "Test Issuer" },
+  document: { type: "Test Notice", issuer: "Test Issuer", recipient: null, issueDate: null },
   explanation: {
-    whatThisIs: { text: "This is a test notice.", evidenceState: "explicit", confidence: 0.9, sourcePage: 1 },
-    whyReceived: { text: "Because this is a test.", evidenceState: "inferred", confidence: 0.6 },
+    whatThisIs: {
+      text: "This is a test notice.",
+      evidenceState: "explicit",
+      confidence: 0.9,
+      sourcePage: 1,
+      sourceText: null,
+    },
+    whyReceived: {
+      text: "Because this is a test.",
+      evidenceState: "inferred",
+      confidence: 0.6,
+      sourcePage: null,
+      sourceText: null,
+    },
   },
   action: { status: "required", urgency: "medium", summary: "Test summary." },
   deadlines: [{ date: "2030-01-01", description: "Test deadline", confidence: 0.9, sourcePage: 2 }],
-  tasks: [{ title: "Do the test task", required: true }],
+  tasks: [{ title: "Do the test task", description: null, required: true, dueDate: null, sourcePage: null }],
   requiredMaterials: [],
   submissionMethods: [],
-  consequences: { text: "", evidenceState: "not_found", confidence: 0.5 },
+  consequences: { text: "", evidenceState: "not_found", confidence: 0.5, sourcePage: null, sourceText: null },
   uncertainties: [],
   confidence: 0.8,
 };
@@ -68,7 +80,12 @@ async function main() {
     assert(byDocumentId.status === "ready", "ready case should also resolve via its documentId");
     assert(byDocumentId.status === "ready" && byDocumentId.caseDetail.id === caseId, "should resolve to the same case");
 
-    // Non-owner: forbidden for both id forms.
+    // Non-owner: forbidden for both id forms. This is also the cross-user storage-access
+    // proof (Feature 20 hardening) — `getShortLivedFileUrl` has no ownership concept of its
+    // own (it just signs whatever blobPath it's given); `loadReadyCase` is the only call
+    // site, and it's only reachable once this same ownership gate has already passed. A
+    // non-owner throwing here means they can never reach the code path that would sign a
+    // URL for userA's blob.
     await getCaseDetail(caseId, userB.id).then(
       () => {
         throw new Error("FAIL: non-owner should not read another user's case");
